@@ -13,7 +13,7 @@ app.use(express.json());
 // ─── CONFIGURAÇÕES — preencha antes do deploy ─────────────────
 const CONFIG = {
   // 1. Anthropic
-  ANTHROPIC_KEY: process.env.ANTHROPIC_API_KEY || "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",
+  ANTHROPIC_KEY: process.env.ANTHROPIC_API_KEY ||
 
   // 2. Z-API
   ZAPI_INSTANCE: process.env.ZAPI_INSTANCE || "3EFD49D1615EC1DB26145A83A6CF71BF",
@@ -21,7 +21,7 @@ const CONFIG = {
   ZAPI_CLIENT:   process.env.ZAPI_CLIENT   || "", // não obrigatório no Trial
 
   // 3. Número da SCAATO (com DDI, sem +)
-  NUMERO_SCAATO: "554799208330147",
+  NUMERO_SCAATO: "5547992083301",
 
   // 4. Porta
   PORT: process.env.PORT || 3000,
