@@ -1,40 +1,23 @@
 // ============================================================
 // SCAATO SCAR — Servidor WhatsApp via Z-API + Claude AI
 // ============================================================
-// Deploy: Render.com (gratuito)
-// Autor: SCAATO Mobilidade
-// ============================================================
-
 const express = require("express");
 const axios = require("axios");
 const app = express();
 app.use(express.json());
 
-// ─── CONFIGURAÇÕES — preencha antes do deploy ─────────────────
 const CONFIG = {
-  // 1. Anthropic
   ANTHROPIC_KEY: process.env.ANTHROPIC_API_KEY || "",
-
-  // 2. Z-API
   ZAPI_INSTANCE: process.env.ZAPI_INSTANCE || "3EFD49D1615EC1DB26145A83A6CF71BF",
-  ZAPI_TOKEN:    process.env.ZAPI_TOKEN    || "CBB1AF359F0B2FE8B50A816B",
-  ZAPI_CLIENT:   process.env.ZAPI_CLIENT   || "", // não obrigatório no Trial
-
-  // 3. Número da SCAATO (com DDI, sem +)
+  ZAPI_TOKEN: process.env.ZAPI_TOKEN || "CBB1AF359F0B2FE8B50A816B",
+  ZAPI_CLIENT: process.env.ZAPI_CLIENT || "",
   NUMERO_SCAATO: "5547992083301",
-
-  // 4. Porta
   PORT: process.env.PORT || 3000,
 };
-// ─────────────────────────────────────────────────────────────
 
-// Histórico de conversas por contato (em memória — use Redis em produção)
 const conversas = new Map();
-
-// Leads capturados
 const leads = [];
 
-// ─── SYSTEM PROMPT SCAR ───────────────────────────────────────
 const SYSTEM_PROMPT = `Você é a SCAR — IA oficial de vendas e suporte da SCAATO MOBILIDADE.
 Empresa: SCAATO ASSISTÊNCIA E COMÉRCIO DE VEÍCULOS LTDA | CNPJ: 64.757.314/0001-16
 Endereço: R. Paulo Marciano Cunha, 13, Sala 03 – Nova Esperança, Balneário Camboriú/SC
@@ -42,7 +25,6 @@ WhatsApp: (47) 99208-3301 | Assistência: (47) 98909-8734 | Email: vendas@scaato
 Simulador: https://scaato-leasing-30714265453.us-west1.run.app/
 
 REGRA ABSOLUTA: NUNCA use "aluguel" ou "locação". Use: leasing, arrendamento mercantil, plano de aquisição programada.
-
 CANAL: WhatsApp — seja mais direto, use emojis moderadamente, mensagens curtas (máx 3 parágrafos).
 
 MODELO DE NEGÓCIO:
@@ -50,7 +32,6 @@ MODELO DE NEGÓCIO:
 - Cada parcela já inclui: leasing + Seguro Porto Seguro (R$54,90) + Telemetria GPS (R$15,00)
 - Contrato digital via Clicksign — título executivo extrajudicial
 - Bloqueio remoto em inadimplência
-- Cessão de recebíveis para FIDC parceiro
 
 LÓGICA DE JUROS:
 - Nome LIMPO + entrada ≥ 30% do veículo: 5,5% a.m.
@@ -62,55 +43,21 @@ LÓGICA DE JUROS:
 
 CATÁLOGO (prazo 24 meses):
 1. Urban Plus — R$7.690 | 1000W | 60V 20.8Ah | NFC, 2 faróis, freio disco, alarme
-   Entrada R$2.000 + nome limpo (7,5%): R$588/mês | Negativado (11,5%): R$776/mês
-
 2. S3 Forever — R$8.990 | 1000W | 60V 23Ah | autonomia 50km | NFC, freio disco D+T
-   Entrada R$2.000 + nome limpo (7,5%): R$706/mês | Negativado (11,5%): R$937/mês
-
 3. X12 — R$8.990 | 1000W | 60V 21Ah | NFC, Bluetooth, ré, freio disco D+T
-   Entrada R$2.000 + nome limpo (7,5%): R$706/mês | Negativado (11,5%): R$937/mês
-
-4. X13 — R$9.490 | 1000W | 60V 20Ah | LED completo, piloto auto, ré, Bluetooth, freio hidráulico D+T, chave presença — A MAIS COMPLETA
-   Entrada R$2.000 + nome limpo (7,5%): R$752/mês | Negativado (11,5%): R$999/mês
-
+4. X13 — R$9.490 | 1000W | 60V 20Ah | LED completo, piloto auto, ré, Bluetooth, freio hidráulico D+T — A MAIS COMPLETA
 5. X21 — R$9.290 | 3000W | 60V 21Ah | NFC, Bluetooth, freio disco D+T | Fat Tire
-   Entrada R$2.000 + nome limpo (7,5%): R$734/mês | Negativado (11,5%): R$975/mês
-
 6. X22 — R$9.890 | 3000W | 60V 21Ah | NFC, Bluetooth, freio disco D+T | Design retrô
-   Entrada R$2.000 + nome limpo (7,5%): R$788/mês | Negativado (11,5%): R$1.049/mês
-
 7. S9 Forever — R$10.490 | 1500W | 64V 30Ah LiFePO4 | autonomia 80km | LCD, NFC — MAIOR AUTONOMIA
-   Entrada R$2.000 + nome limpo (7,5%): R$1.008/mês | Negativado (11,5%): R$1.235/mês
 
-URBAN 100 (sem entrada):
-- Grupos de 100 participantes | 24 meses
-- Pré-contemplação: R$467/mês | Pós-contemplação: R$567/mês
-- Entregas a partir do 3º mês por ordem de ingresso
+URBAN 100 (sem entrada): Grupos de 100 | 24 meses | Pré: R$467/mês | Pós: R$567/mês
 
-FLUXO DE QUALIFICAÇÃO (colete progressivamente):
-1. Nome do cliente
-2. Situação do nome (limpo ou negativado)
-3. Valor disponível para entrada
-4. Modelo de interesse ou uso pretendido
-5. Cidade/Estado
+FLUXO: nome → situação do nome → valor de entrada → modelo → cidade
+COMPORTAMENTO: mensagens curtas, *negrito* WhatsApp, emojis com moderação
+CTA final: sempre direcione para simulador ou fechar via WhatsApp`;
 
-COMPORTAMENTO NO WHATSAPP:
-- Mensagens curtas e diretas — máx 200 palavras
-- Use *negrito* com asteriscos (formato WhatsApp)
-- Use emojis com moderação
-- Sempre pergunte: nome limpo ou negativado? + valor de entrada disponível
-- Com essas infos, apresente simulação personalizada
-- CTA final: sempre direcione para simulador ou para fechar via WhatsApp
-- Se cliente der nome + email: registre como lead qualificado
-- Encaminhe para equipe humana se: reclamação grave, proposta acima de 3 unidades, solicitação de contrato`;
-
-// ─── FUNÇÃO: Chamar Claude ────────────────────────────────────
 async function chamarClaude(historico, mensagemAtual) {
-  const messages = [
-    ...historico,
-    { role: "user", content: mensagemAtual },
-  ];
-
+  const messages = [...historico, { role: "user", content: mensagemAtual }];
   const response = await axios.post(
     "https://api.anthropic.com/v1/messages",
     {
@@ -127,22 +74,26 @@ async function chamarClaude(historico, mensagemAtual) {
       },
     }
   );
-
   return response.data.content[0].text;
 }
 
-// ─── FUNÇÃO: Enviar mensagem WhatsApp via Z-API ───────────────
 async function enviarWhatsApp(telefone, mensagem) {
   const url = `https://api.z-api.io/instances/${CONFIG.ZAPI_INSTANCE}/token/${CONFIG.ZAPI_TOKEN}/send-text`;
   const headers = { "Content-Type": "application/json" };
   if (CONFIG.ZAPI_CLIENT) headers["Client-Token"] = CONFIG.ZAPI_CLIENT;
-  await axios.post(url, { phone: telefone, message: mensagem }, { headers });
+  
+  console.log(`📤 Enviando para ${telefone} via Z-API...`);
+  console.log(`📤 URL: ${url}`);
+  console.log(`📤 Client-Token presente: ${!!CONFIG.ZAPI_CLIENT}`);
+  
+  const resp = await axios.post(url, { phone: telefone, message: mensagem }, { headers });
+  console.log(`✅ Z-API respondeu:`, JSON.stringify(resp.data));
+  return resp.data;
 }
-// ─── FUNÇÃO: Detectar e salvar lead ──────────────────────────
-function detectarLead(telefone, mensagem, resposta) {
+
+function detectarLead(telefone, mensagem) {
   const emailMatch = mensagem.match(/[\w.-]+@[\w.-]+\.\w+/);
   const nomeMatch = mensagem.match(/(?:me\s+chamo|meu\s+nome\s+[eé]|sou\s+(?:o|a)\s+)([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/i);
-
   if (emailMatch || nomeMatch) {
     const leadExistente = leads.find(l => l.telefone === telefone);
     if (leadExistente) {
@@ -159,132 +110,126 @@ function detectarLead(telefone, mensagem, resposta) {
         canal: "whatsapp",
         status: "novo",
       });
-      console.log(`🎯 Novo lead capturado: ${telefone}`);
+      console.log(`🎯 Novo lead: ${telefone}`);
     }
   }
 }
 
-// ─── WEBHOOK — recebe mensagens do Z-API ─────────────────────
+// ─── WEBHOOK ────────────────────────────────────────────────
 app.post("/webhook", async (req, res) => {
   try {
     const body = req.body;
+    
+    // Log completo do body para debug
+    console.log("📨 Webhook body:", JSON.stringify(body).substring(0, 200));
 
-    // Ignora mensagens enviadas pela própria conta
     if (body.fromMe) return res.sendStatus(200);
-
-    // Ignora mensagens de grupo
     if (body.isGroup) return res.sendStatus(200);
 
-    // Extrai dados da mensagem
-    const telefone = body.phone || body.from;
-    const mensagem = body.text?.message || body.body || "";
+    // Z-API pode mandar o telefone em diferentes campos
+    const telefone = body.phone || body.from || body.sender;
+    
+    // Z-API pode mandar a mensagem em diferentes campos
+    const mensagem = 
+      body.text?.message ||
+      body.message?.conversation ||
+      body.message?.extendedTextMessage?.text ||
+      body.body ||
+      body.content ||
+      "";
 
-    if (!telefone || !mensagem) return res.sendStatus(200);
-
-    console.log(`📱 Mensagem recebida de ${telefone}: ${mensagem.substring(0, 50)}...`);
-
-    // Recupera ou inicia histórico da conversa
-    if (!conversas.has(telefone)) {
-      conversas.set(telefone, []);
+    if (!telefone || !mensagem) {
+      console.log("⚠️ Sem telefone ou mensagem:", JSON.stringify(body).substring(0, 300));
+      return res.sendStatus(200);
     }
-    const historico = conversas.get(telefone);
 
-    // Limita histórico a 20 mensagens (10 trocas) para economizar tokens
+    console.log(`📱 De ${telefone}: ${mensagem.substring(0, 80)}`);
+
+    if (!conversas.has(telefone)) conversas.set(telefone, []);
+    const historico = conversas.get(telefone);
     const historicoLimitado = historico.slice(-20);
 
-    // Chama a SCAR (Claude)
     const resposta = await chamarClaude(historicoLimitado, mensagem);
 
-    // Atualiza histórico
     historico.push({ role: "user", content: mensagem });
     historico.push({ role: "assistant", content: resposta });
 
-    // Detecta leads
-    detectarLead(telefone, mensagem, resposta);
+    detectarLead(telefone, mensagem);
 
-    // Envia resposta via WhatsApp
     await enviarWhatsApp(telefone, resposta);
-
     console.log(`✅ Resposta enviada para ${telefone}`);
-    res.sendStatus(200);
 
+    res.sendStatus(200);
   } catch (error) {
-    console.error("❌ Erro no webhook:", error.message);
+    console.error("❌ Erro:", error.response?.data || error.message);
     res.sendStatus(500);
   }
 });
 
-// ─── ROTAS DE ADMINISTRAÇÃO ───────────────────────────────────
-
-// Health check
 app.get("/", (req, res) => {
   res.json({
     status: "🟢 SCAR Online",
     empresa: "SCAATO MOBILIDADE",
-    versao: "1.0.0",
+    versao: "2.0.0",
     conversas_ativas: conversas.size,
     leads_capturados: leads.length,
     uptime: process.uptime(),
+    config: {
+      zapi_instance: CONFIG.ZAPI_INSTANCE ? "✅" : "❌",
+      zapi_token: CONFIG.ZAPI_TOKEN ? "✅" : "❌",
+      zapi_client: CONFIG.ZAPI_CLIENT ? "✅" : "❌",
+      anthropic: CONFIG.ANTHROPIC_KEY ? "✅" : "❌",
+    }
   });
 });
 
-// Lista leads
 app.get("/leads", (req, res) => {
-  res.json({
-    total: leads.length,
-    leads: leads.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
-  });
+  res.json({ total: leads.length, leads: leads.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) });
 });
 
-// Lista conversas ativas
 app.get("/conversas", (req, res) => {
   const lista = [];
   conversas.forEach((msgs, telefone) => {
-    lista.push({
-      telefone,
-      mensagens: msgs.length,
-      ultima: msgs[msgs.length - 1]?.content?.substring(0, 80) || "",
-    });
+    lista.push({ telefone, mensagens: msgs.length, ultima: msgs[msgs.length - 1]?.content?.substring(0, 80) || "" });
   });
   res.json({ total: lista.length, conversas: lista });
 });
 
-// Histórico de um contato
 app.get("/conversa/:telefone", (req, res) => {
   const hist = conversas.get(req.params.telefone);
-  if (!hist) return res.status(404).json({ erro: "Conversa não encontrada" });
+  if (!hist) return res.status(404).json({ erro: "Não encontrada" });
   res.json({ telefone: req.params.telefone, mensagens: hist });
 });
 
-// Limpar histórico de um contato (reinicia conversa)
 app.delete("/conversa/:telefone", (req, res) => {
   conversas.delete(req.params.telefone);
-  res.json({ ok: true, mensagem: "Histórico limpo" });
+  res.json({ ok: true });
 });
 
-// Enviar mensagem manual (equipe de vendas)
 app.post("/enviar", async (req, res) => {
   const { telefone, mensagem } = req.body;
-  if (!telefone || !mensagem) {
-    return res.status(400).json({ erro: "telefone e mensagem são obrigatórios" });
-  }
+  if (!telefone || !mensagem) return res.status(400).json({ erro: "telefone e mensagem são obrigatórios" });
   try {
     await enviarWhatsApp(telefone, mensagem);
-    res.json({ ok: true, mensagem: "Enviado com sucesso" });
+    res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ erro: e.message });
+    res.status(500).json({ erro: e.response?.data || e.message });
   }
 });
 
-// ─── START ────────────────────────────────────────────────────
 app.listen(CONFIG.PORT, () => {
   console.log(`
 ╔══════════════════════════════════════╗
-║   🛵 SCAATO SCAR — WhatsApp Bot      ║
-║   Status: 🟢 Online                  ║
-║   Porta: ${CONFIG.PORT}                       ║
-║   Webhook: /webhook                  ║
-║   Leads: /leads                      ║
+║ 🛵 SCAATO SCAR — WhatsApp Bot       ║
+║ Status: 🟢 Online                   ║
+║ Porta: ${CONFIG.PORT}                       ║
+║ Webhook: /webhook                   ║
+║ Leads: /leads                       ║
 ╚══════════════════════════════════════╝
   `);
+  console.log("🔑 Config:");
+  console.log("  ZAPI_INSTANCE:", CONFIG.ZAPI_INSTANCE ? "✅" : "❌ FALTANDO");
+  console.log("  ZAPI_TOKEN:", CONFIG.ZAPI_TOKEN ? "✅" : "❌ FALTANDO");
+  console.log("  ZAPI_CLIENT:", CONFIG.ZAPI_CLIENT ? "✅ " + CONFIG.ZAPI_CLIENT.substring(0,8) + "..." : "❌ FALTANDO");
+  console.log("  ANTHROPIC_KEY:", CONFIG.ANTHROPIC_KEY ? "✅" : "❌ FALTANDO");
 });
