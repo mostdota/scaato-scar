@@ -13,7 +13,7 @@ app.use(express.json());
 // ─── CONFIGURAÇÕES — preencha antes do deploy ─────────────────
 const CONFIG = {
   // 1. Anthropic
-  process.env.ANTHROPIC_API_KEY || "",
+  ANTHROPIC_KEY: process.env.ANTHROPIC_API_KEY || "",
 
   // 2. Z-API
   ZAPI_INSTANCE: process.env.ZAPI_INSTANCE || "3EFD49D1615EC1DB26145A83A6CF71BF",
