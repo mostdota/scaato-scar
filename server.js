@@ -6,7 +6,7 @@
 // ============================================================
 
 const express = require("express");
-const axios = require("axios");
+const axios = require("axios");h
 const app = express();
 app.use(express.json());
 
@@ -134,19 +134,10 @@ async function chamarClaude(historico, mensagemAtual) {
 // ─── FUNÇÃO: Enviar mensagem WhatsApp via Z-API ───────────────
 async function enviarWhatsApp(telefone, mensagem) {
   const url = `https://api.z-api.io/instances/${CONFIG.ZAPI_INSTANCE}/token/${CONFIG.ZAPI_TOKEN}/send-text`;
-
-  await axios.post(
-    url,
-    { phone: telefone, message: mensagem },
-    {
-      headers: {
-        "Content-Type": "application/json",
-        "Client-Token": CONFIG.ZAPI_CLIENT,
-      },
-    }
-  );
+  const headers = { "Content-Type": "application/json" };
+  if (CONFIG.ZAPI_CLIENT) headers["Client-Token"] = CONFIG.ZAPI_CLIENT;
+  await axios.post(url, { phone: telefone, message: mensagem }, { headers });
 }
-
 // ─── FUNÇÃO: Detectar e salvar lead ──────────────────────────
 function detectarLead(telefone, mensagem, resposta) {
   const emailMatch = mensagem.match(/[\w.-]+@[\w.-]+\.\w+/);
