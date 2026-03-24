@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCAR CRM — SCAATO</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--c:#00C8FF;--cdim:rgba(0,200,255,.12);--cb:rgba(0,200,255,.2);--bg:#05050A;--bg2:#080C14;--bg3:#0C1220;--card:#090D1A;--card2:#0D1528;--brd:rgba(0,200,255,.08);--brd2:rgba(0,200,255,.18);--txt:#E8F4FF;--mut:#6B8CAE;--mut2:#3A5070;--ok:#00E5A0;--warn:#FFB800;--err:#E6333A;--sw:240px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--txt);display:flex;height:100vh;overflow:hidden}
+.sb{width:var(--sw);background:var(--bg2);border-right:1px solid var(--brd2);display:flex;flex-direction:column;flex-shrink:0}
+.brand{padding:22px 18px 18px;border-bottom:1px solid var(--brd)}
+.brand-row{display:flex;align-items:center;gap:10px;margin-bottom:5px}
+.brand-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--c),#0066AA);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.brand-name{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;letter-spacing:.05em;color:var(--c)}
+.brand-sub{font-size:10px;color:var(--mut);font-family:'JetBrains Mono',monospace;letter-spacing:.1em;padding-left:46px}
+.nav{flex:1;padding:12px 0;overflow-y:auto}
+.nav-sec{font-size:9px;font-weight:700;letter-spacing:.15em;color:var(--mut2);text-transform:uppercase;padding:10px 18px 4px;font-family:'JetBrains Mono',monospace}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 18px;cursor:pointer;font-size:13px;font-weight:500;color:var(--mut);transition:all .15s;border-left:2px solid transparent}
+.nav-item:hover{color:var(--txt);background:rgba(0,200,255,.04)}
+.nav-item.active{color:var(--c);background:var(--cdim);border-left-color:var(--c)}
+.nav-item .ico{font-size:15px;width:20px;text-align:center}
+.nb{margin-left:auto;background:var(--cdim);border:1px solid var(--cb);color:var(--c);font-size:10px;padding:1px 7px;border-radius:100px;font-family:'JetBrains Mono',monospace}
+.sb-foot{padding:14px 18px;border-top:1px solid var(--brd)}
+.bot-card{display:flex;align-items:center;gap:10px;background:var(--card2);border:1px solid var(--brd2);border-radius:10px;padding:10px 12px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok);animation:glow 2s ease-in-out infinite;flex-shrink:0}
+.dot.off{background:var(--err);box-shadow:0 0 8px var(--err);animation:none}
+@keyframes glow{0%,100%{box-shadow:0 0 4px var(--ok)}50%{box-shadow:0 0 12px var(--ok)}}
+.bn{font-size:12px;font-weight:700}.bs{font-size:10px;color:var(--mut);font-family:'JetBrains Mono',monospace}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:52px;background:var(--bg2);border-bottom:1px solid var(--brd2);display:flex;align-items:center;padding:0 22px;gap:14px;flex-shrink:0}
+.page-title{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;letter-spacing:.05em;flex:1}
+.tbtn{display:flex;align-items:center;gap:6px;padding:6px 13px;border-radius:7px;font-family:'Barlow',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;border:1px solid var(--brd2);background:transparent;color:var(--mut)}
+.tbtn:hover{border-color:var(--c);color:var(--c);background:var(--cdim)}
+.tbtn.spinning svg{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.clock{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--mut);padding:5px 11px;background:var(--bg3);border-radius:6px;border:1px solid var(--brd)}
+.page{display:none;flex:1;overflow:hidden;flex-direction:column}
+.page.active{display:flex}
+.pc{flex:1;overflow-y:auto;padding:22px}
+.pc::-webkit-scrollbar{width:3px}.pc::-webkit-scrollbar-thumb{background:var(--mut2)}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.kpi{background:var(--card);border:1px solid var(--brd);border-radius:13px;padding:18px;transition:border-color .2s,transform .2s}
+.kpi:hover{border-color:var(--brd2);transform:translateY(-2px)}
+.kpi-icon{font-size:20px;margin-bottom:10px;display:block}
+.kv{font-family:'Barlow Condensed',sans-serif;font-size:38px;font-weight:800;color:var(--c);line-height:1;margin-bottom:3px}
+.kl{font-size:12px;color:var(--mut);font-weight:500;margin-bottom:2px}
+.kd{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--ok)}
+.dash-grid{display:grid;grid-template-columns:1fr 360px;gap:18px}
+.card{background:var(--card);border:1px solid var(--brd);border-radius:13px;overflow:hidden;margin-bottom:18px}
+.card:last-child{margin-bottom:0}
+.ch{padding:14px 18px;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between}
+.ct{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:7px}
+.ct::before{content:'';width:3px;height:12px;background:var(--c);border-radius:2px}
+.badge{font-size:11px;padding:2px 8px;border-radius:100px;font-family:'JetBrains Mono',monospace;font-weight:600}
+.bc{background:var(--cdim);border:1px solid var(--cb);color:var(--c)}
+.bg{background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.25);color:var(--ok)}
+.br{background:rgba(230,51,58,.1);border:1px solid rgba(230,51,58,.25);color:var(--err)}
+.act-list{max-height:300px;overflow-y:auto}
+.act-list::-webkit-scrollbar{width:3px}.act-list::-webkit-scrollbar-thumb{background:var(--mut2)}
+.act-item{display:flex;align-items:flex-start;gap:11px;padding:11px 18px;border-bottom:1px solid var(--brd);transition:background .1s}
+.act-item:hover{background:rgba(0,200,255,.03)}
+.act-item:last-child{border-bottom:none}
+.act-ico{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;background:var(--bg3);border:1px solid var(--brd)}
+.act-txt{font-size:13px;color:var(--txt);line-height:1.4;margin-bottom:2px}
+.act-txt strong{color:var(--c);font-weight:600}
+.act-time{font-size:11px;color:var(--mut);font-family:'JetBrains Mono',monospace}
+.funnel{display:flex;flex-direction:column;gap:7px;padding:14px 18px}
+.fstage{display:flex;align-items:center;gap:10px}
+.flabel{font-size:11px;color:var(--mut);width:120px;font-weight:600;flex-shrink:0}
+.fbar-w{flex:1;height:26px;background:var(--bg3);border-radius:4px;overflow:hidden;border:1px solid var(--brd)}
+.fbar{height:100%;display:flex;align-items:center;padding-left:8px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;color:#000;border-radius:4px;transition:width 1s ease-out}
+.fcount{font-size:11px;color:var(--mut);font-family:'JetBrains Mono',monospace;width:28px;text-align:right;flex-shrink:0}
+.sys-row{display:flex;align-items:center;justify-content:space-between;padding:8px 18px;border-bottom:1px solid var(--brd);font-size:13px}
+.sys-row:last-child{border-bottom:none}
+.sys-label{color:var(--mut)}
+.conv-layout{display:grid;grid-template-columns:320px 1fr;gap:0;flex:1;overflow:hidden}
+.conv-sb{border-right:1px solid var(--brd2);display:flex;flex-direction:column;overflow:hidden}
+.srch{padding:10px 14px;border-bottom:1px solid var(--brd)}
+.srch-in{width:100%;background:var(--bg3);border:1px solid var(--brd2);border-radius:7px;padding:7px 11px 7px 32px;font-family:'Barlow',sans-serif;font-size:13px;color:var(--txt);outline:none;transition:border-color .2s;background-image:url("data:image/svg+xml,%3Csvg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='%236B8CAE' stroke-width='2' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:9px center}
+.srch-in:focus{border-color:var(--c)}.srch-in::placeholder{color:var(--mut2)}
+.conv-list{flex:1;overflow-y:auto}.conv-list::-webkit-scrollbar{width:3px}.conv-list::-webkit-scrollbar-thumb{background:var(--mut2)}
+.ci{display:flex;align-items:center;gap:11px;padding:13px 15px;cursor:pointer;border-bottom:1px solid var(--brd);transition:background .1s}
+.ci:hover{background:rgba(0,200,255,.04)}.ci.active{background:var(--cdim);border-left:2px solid var(--c)}
+.av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--bg3),var(--card2));border:1px solid var(--brd2);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--c);flex-shrink:0}
+.ci-info{flex:1;min-width:0}
+.ci-phone{font-size:12px;font-weight:700;color:var(--txt);margin-bottom:2px;font-family:'JetBrains Mono',monospace}
+.ci-prev{font-size:11px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ci-mc{font-size:10px;background:var(--cdim);border:1px solid var(--cb);color:var(--c);padding:1px 6px;border-radius:100px;font-family:'JetBrains Mono',monospace}
+.chat-panel{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.chat-top{padding:12px 18px;border-bottom:1px solid var(--brd2);background:var(--card);display:flex;align-items:center;gap:12px}
+.chat-contact-name{font-size:14px;font-weight:700}.chat-contact-sub{font-size:11px;color:var(--mut);font-family:'JetBrains Mono',monospace}
+.chat-msgs{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:9px}
+.chat-msgs::-webkit-scrollbar{width:3px}.chat-msgs::-webkit-scrollbar-thumb{background:var(--mut2)}
+.mw{display:flex;flex-direction:column;max-width:74%}.mw.user{align-self:flex-end;align-items:flex-end}.mw.bot{align-self:flex-start;align-items:flex-start}
+.mr{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--mut2);margin-bottom:3px}
+.mb{padding:9px 13px;border-radius:13px;font-size:13px;line-height:1.55}
+.mw.user .mb{background:linear-gradient(135deg,rgba(0,200,255,.15),rgba(0,200,255,.07));border:1px solid rgba(0,200,255,.25);border-bottom-right-radius:3px}
+.mw.bot .mb{background:var(--card2);border:1px solid var(--brd);border-bottom-left-radius:3px}
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--mut2)}
+.empty-ico{font-size:44px;opacity:.25}
+.lt-toolbar{display:flex;gap:8px;padding:14px 22px;border-bottom:1px solid var(--brd);background:var(--card);flex-shrink:0;align-items:center}
+.fb{padding:5px 13px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--brd2);background:transparent;color:var(--mut);font-family:'Barlow',sans-serif;transition:all .15s}
+.fb.active,.fb:hover{border-color:var(--c);color:var(--c);background:var(--cdim)}
+table{width:100%;border-collapse:collapse}
+thead th{padding:9px 15px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);font-family:'JetBrains Mono',monospace;background:var(--bg2);border-bottom:1px solid var(--brd2);white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--brd);transition:background .1s}tbody tr:hover{background:rgba(0,200,255,.03)}tbody tr:last-child{border-bottom:none}
+tbody td{padding:13px 15px;font-size:13px;color:var(--txt);vertical-align:middle}
+.td-phone{font-family:'JetBrains Mono',monospace;color:var(--c);font-size:12px}.td-name{font-weight:600}.td-m{color:var(--mut);font-size:12px}
+.sim-wrap{max-width:580px}
+.fld{margin-bottom:18px}.fld label{font-size:11px;color:var(--mut);font-weight:600;letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:6px}
+select,input[type=number]{width:100%;background:var(--bg3);border:1px solid var(--brd2);border-radius:8px;padding:10px 12px;color:var(--txt);font-family:'Barlow',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
+select:focus,input[type=number]:focus{border-color:var(--c)}
+.res-box{background:var(--bg3);border:1px solid var(--brd2);border-radius:10px;padding:20px;margin-top:6px}
+.res-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.res-item .rl{font-size:10px;color:var(--mut);margin-bottom:3px;font-family:'JetBrains Mono',monospace}
+.res-item .rv{font-size:26px;font-weight:800;font-family:'Barlow Condensed',sans-serif}
+.res-item .rv.cyan{color:var(--c)}
+.res-det{border-top:1px solid var(--brd);padding-top:12px;display:flex;flex-direction:column;gap:5px}
+.res-row{display:flex;justify-content:space-between;font-size:12px;padding:3px 0}
+.res-row span{color:var(--mut)}.res-row strong{font-family:'JetBrains Mono',monospace}
+.res-total{display:flex;justify-content:space-between;font-size:14px;font-weight:700;padding:8px 0 0;border-top:1px solid var(--brd);margin-top:4px}
+.res-total strong{color:var(--c);font-family:'JetBrains Mono',monospace}
+.ld{display:flex;align-items:center;justify-content:center;padding:40px;gap:9px;color:var(--mut);font-family:'JetBrains Mono',monospace;font-size:12px}
+.sp{width:15px;height:15px;border:2px solid var(--brd2);border-top-color:var(--c);border-radius:50%;animation:spin .7s linear infinite}
+.es{padding:40px;text-align:center;color:var(--mut2);font-size:12px;font-family:'JetBrains Mono',monospace;line-height:1.8}
+.toast{position:fixed;bottom:18px;right:18px;background:var(--card2);border:1px solid var(--cb);color:var(--c);padding:9px 16px;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:12px;z-index:9999;transform:translateY(60px);opacity:0;transition:all .25s}
+.toast.show{transform:translateY(0);opacity:1}
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.cat-card{background:var(--card);border:1px solid var(--brd);border-radius:13px;overflow:hidden;transition:transform .2s,border-color .2s}
+.cat-card:hover{transform:translateY(-3px);border-color:var(--brd2)}
+.cat-img{background:linear-gradient(135deg,var(--bg3),var(--card2));height:110px;display:flex;align-items:center;justify-content:center;font-size:50px;border-bottom:1px solid var(--brd)}
+.cat-body{padding:14px}
+.cat-name{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;margin-bottom:2px;display:flex;align-items:center;justify-content:space-between}
+.cat-price{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;color:var(--c);margin-bottom:4px}
+.cat-parc{font-size:12px;color:var(--ok);font-weight:600;margin-bottom:8px}
+.cat-specs{font-size:12px;color:var(--mut);display:flex;flex-direction:column;gap:3px}
+.cfg-wrap{max-width:580px;display:flex;flex-direction:column;gap:14px}
+.ep-row{display:flex;align-items:center;gap:10px;background:var(--bg3);padding:9px 13px;border-radius:7px;border:1px solid var(--brd)}
+.ep-method{font-size:10px;padding:2px 6px;background:var(--cdim);border:1px solid var(--cb);color:var(--c);border-radius:4px;font-family:'JetBrains Mono',monospace;font-weight:700;flex-shrink:0}
+.ep-path{font-family:'JetBrains Mono',monospace;font-size:12px}
+.cfg-row{display:flex;justify-content:space-between;font-size:13px;padding:10px 18px;border-bottom:1px solid var(--brd)}
+.cfg-row:last-child{border-bottom:none}
+.cfg-row span{color:var(--mut)}.cfg-row strong{font-family:'JetBrains Mono',monospace;color:var(--c);font-size:12px}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--mut2);border-radius:2px}
+</style>
+</head>
+<body>
+<aside class="sb">
+  <div class="brand">
+    <div class="brand-row"><div class="brand-icon">🛵</div><span class="brand-name">SCAR</span></div>
+    <div class="brand-sub">CRM · SCAATO MOBILIDADE</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-sec">Principal</div>
+    <div class="nav-item active" onclick="pg('dashboard',this)"><span class="ico">📊</span>Dashboard</div>
+    <div class="nav-item" onclick="pg('conversas',this)"><span class="ico">💬</span>Conversas<span class="nb" id="nb-conv">0</span></div>
+    <div class="nav-item" onclick="pg('leads',this)"><span class="ico">🎯</span>Leads<span class="nb" id="nb-leads">0</span></div>
+    <div class="nav-sec">Produto</div>
+    <div class="nav-item" onclick="pg('catalogo',this)"><span class="ico">🛵</span>Catálogo</div>
+    <div class="nav-item" onclick="pg('simulador',this)"><span class="ico">🧮</span>Simulador</div>
+    <div class="nav-sec">Sistema</div>
+    <div class="nav-item" onclick="pg('config',this)"><span class="ico">⚙️</span>Configurações</div>
+  </nav>
+  <div class="sb-foot">
+    <div class="bot-card">
+      <div class="dot" id="bdot"></div>
+      <div><div class="bn">SCAR Bot</div><div class="bs" id="bstate">verificando...</div></div>
+    </div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="page-title" id="ptitle">Dashboard</div>
+    <div class="clock" id="clk">--:--:--</div>
+    <button class="tbtn" onclick="loadAll(true)" id="rbtn">
+      <svg id="rico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+      Atualizar
+    </button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="p-dashboard">
+    <div class="pc">
+      <div class="kpi-grid">
+        <div class="kpi"><span class="kpi-icon">💬</span><div class="kv" id="kc">—</div><div class="kl">Conversas Ativas</div><div class="kd">em tempo real</div></div>
+        <div class="kpi"><span class="kpi-icon">🎯</span><div class="kv" id="kl">—</div><div class="kl">Leads Capturados</div><div class="kd">identificados</div></div>
+        <div class="kpi"><span class="kpi-icon">⏱️</span><div class="kv" id="ku">—</div><div class="kl">Uptime</div><div class="kd" id="kus">online</div></div>
+        <div class="kpi"><span class="kpi-icon">🤖</span><div class="kv" id="kv">—</div><div class="kl">Versão SCAR</div><div class="kd">Haiku 4.5</div></div>
+      </div>
+      <div class="dash-grid">
+        <div>
+          <div class="card">
+            <div class="ch"><div class="ct">Atividade Recente</div><span class="badge bc">ao vivo</span></div>
+            <div class="act-list" id="act-feed"><div class="ld"><div class="sp"></div>Carregando...</div></div>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <div class="ch"><div class="ct">Funil de Atendimento</div></div>
+            <div class="funnel" id="funnel"><div class="ld"><div class="sp"></div></div></div>
+          </div>
+          <div class="card">
+            <div class="ch"><div class="ct">Status do Sistema</div></div>
+            <div id="sys-status"><div class="ld"><div class="sp"></div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONVERSAS -->
+  <div class="page" id="p-conversas">
+    <div class="conv-layout">
+      <div class="conv-sb">
+        <div class="srch"><input class="srch-in" placeholder="Buscar número..." id="conv-srch" oninput="filterC()"></div>
+        <div class="conv-list" id="clist"><div class="ld"><div class="sp"></div>Carregando...</div></div>
+      </div>
+      <div class="chat-panel">
+        <div class="chat-top" id="chat-top" style="display:none">
+          <div class="av" id="chat-av">?</div>
+          <div style="flex:1"><div class="chat-contact-name" id="chat-name">—</div><div class="chat-contact-sub" id="chat-sub">selecione uma conversa</div></div>
+          <span class="badge bc" id="chat-mc">0 msgs</span>
+        </div>
+        <div class="chat-msgs" id="chat-msgs">
+          <div class="empty"><div class="empty-ico">💬</div><div>Selecione uma conversa</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEADS -->
+  <div class="page" id="p-leads">
+    <div class="lt-toolbar">
+      <button class="fb active">Todos</button>
+      <button class="fb">Novo</button>
+      <button class="fb">Em contato</button>
+      <div style="margin-left:auto"><span class="badge bc" id="leads-cnt">0 leads</span></div>
+    </div>
+    <div class="pc" style="padding:0">
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Contato</th><th>Telefone</th><th>E-mail</th><th>Canal</th><th>Status</th><th>Capturado em</th></tr></thead>
+          <tbody id="leads-tb"><tr><td colspan="6"><div class="ld"><div class="sp"></div>Carregando...</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- CATÁLOGO -->
+  <div class="page" id="p-catalogo">
+    <div class="pc"><div class="cat-grid" id="cat-grid"></div></div>
+  </div>
+
+  <!-- SIMULADOR -->
+  <div class="page" id="p-simulador">
+    <div class="pc">
+      <div class="sim-wrap">
+        <div class="card">
+          <div class="ch"><div class="ct">Simulador de Leasing</div><span class="badge bc">24 meses</span></div>
+          <div style="padding:22px">
+            <div class="fld">
+              <label>Modelo</label>
+              <select id="s-modelo" onchange="simCalc()">
+                <option value="7690">Urban Plus — R$ 7.690</option>
+                <option value="8990a">S3 Forever — R$ 8.990</option>
+                <option value="8990b">X12 — R$ 8.990</option>
+                <option value="9490">X13 — R$ 9.490 ⭐</option>
+                <option value="9290">X21 — R$ 9.290</option>
+                <option value="9890">X22 — R$ 9.890</option>
+                <option value="10490">S9 Forever — R$ 10.490</option>
+              </select>
+            </div>
+            <div class="fld">
+              <label>Entrada (R$) <span id="s-pct" style="color:var(--c)"></span></label>
+              <input type="number" id="s-entrada" placeholder="0,00" oninput="simCalc()" min="0">
+            </div>
+            <div id="s-res" style="display:none" class="res-box">
+              <div class="res-grid">
+                <div class="res-item"><div class="rl">PARCELA MENSAL</div><div class="rv cyan" id="r-parc">—</div></div>
+                <div class="res-item"><div class="rl">PRAZO</div><div class="rv">24 meses</div></div>
+              </div>
+              <div class="res-det" id="r-det"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFIG -->
+  <div class="page" id="p-config">
+    <div class="pc">
+      <div class="cfg-wrap">
+        <div class="card">
+          <div class="ch"><div class="ct">Endpoints da API</div></div>
+          <div style="padding:14px 18px;display:flex;flex-direction:column;gap:8px" id="eps"></div>
+        </div>
+        <div class="card">
+          <div class="ch"><div class="ct">Sobre o SCAR</div></div>
+          <div>
+            <div class="cfg-row"><span>Modelo IA</span><strong>claude-haiku-4-5-20251001</strong></div>
+            <div class="cfg-row"><span>WhatsApp</span><strong>(47) 99208-3301</strong></div>
+            <div class="cfg-row"><span>Hosting</span><strong>Render Starter</strong></div>
+            <div class="cfg-row"><span>WhatsApp API</span><strong>Z-API</strong></div>
+            <div class="cfg-row"><span>Modelo financeiro</span><strong>Deságio 7% a.m. / 24 meses</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const BASE='';// mesmo servidor
+let allConv=[],selPhone=null;
+const FATOR=11.4693,SEG=54.90,GPS=15.00;
+const PRECOS={'7690':7690,'8990a':8990,'8990b':8990,'9490':9490,'9290':9290,'9890':9890,'10490':10490};
+
+function fmtPhone(p){const s=String(p).replace(/\D/g,'');if(s.length===13)return`+${s.slice(0,2)} (${s.slice(2,4)}) ${s.slice(4,9)}-${s.slice(9)}`;return'+'+s}
+function initials(p){return String(p).replace(/\D/g,'').slice(-2)}
+function fmtUp(s){if(s<60)return[Math.floor(s)+'s','segundos'];if(s<3600)return[Math.floor(s/60)+'m','minutos'];return[(s/3600).toFixed(1)+'h','horas']}
+function fmtM(v){return'R$ '+v.toFixed(2).replace('.',',')}
+function toast(m,e=false){const t=document.getElementById('toast');t.textContent=m;t.style.borderColor=e?'rgba(230,51,58,.4)':'var(--cb)';t.style.color=e?'var(--err)':'var(--c)';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
+
+setInterval(()=>{document.getElementById('clk').textContent=new Date().toLocaleTimeString('pt-BR')},1000);
+
+const TITLES={dashboard:'Dashboard',conversas:'Conversas',leads:'Leads',catalogo:'Catálogo',simulador:'Simulador de Leasing',config:'Configurações'};
+function pg(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('p-'+id).classList.add('active');
+  if(el)el.classList.add('active');
+  document.getElementById('ptitle').textContent=TITLES[id]||id;
+  if(id==='conversas')renderConv();
+  if(id==='leads')loadLeads();
+  if(id==='catalogo')renderCatalog();
+  if(id==='config')renderConfig();
+}
+
+async function loadStatus(){
+  try{
+    const d=await fetch(BASE+'/api/status').then(r=>r.json());
+    document.getElementById('bdot').className='dot';
+    document.getElementById('bstate').textContent='● online';
+    document.getElementById('kc').textContent=d.conversas_ativas??0;
+    document.getElementById('kl').textContent=d.leads_capturados??0;
+    document.getElementById('kv').textContent=d.versao??'3.0';
+    document.getElementById('nb-conv').textContent=d.conversas_ativas??0;
+    document.getElementById('nb-leads').textContent=d.leads_capturados??0;
+    const[uv,us]=fmtUp(d.uptime||0);
+    document.getElementById('ku').textContent=uv;
+    document.getElementById('kus').textContent=us+' online';
+    const c=d.config||{};
+    document.getElementById('sys-status').innerHTML=[
+      ['Z-API Instance',c.zapi_instance==='✅'],
+      ['Client-Token',c.zapi_client==='✅'],
+      ['Anthropic API',c.anthropic==='✅'],
+      ['WhatsApp',true],
+    ].map(([l,ok])=>`<div class="sys-row"><span class="sys-label">${l}</span><span class="badge ${ok?'bg':'br'}">${ok?'online':'offline'}</span></div>`).join('');
+  }catch(e){
+    document.getElementById('bdot').className='dot off';
+    document.getElementById('bstate').textContent='● offline';
+    document.getElementById('sys-status').innerHTML='<div class="es">// servidor offline</div>';
+  }
+}
+
+async function loadConv(){
+  try{
+    const d=await fetch(BASE+'/api/conversas').then(r=>r.json());
+    allConv=d.conversas||[];
+    if(allConv.length>0){
+      document.getElementById('act-feed').innerHTML=allConv.map(c=>`
+        <div class="act-item">
+          <div class="act-ico">💬</div>
+          <div>
+            <div class="act-txt"><strong>${fmtPhone(c.telefone)}</strong> em conversa ativa</div>
+            <div class="act-time">${c.mensagens} msgs · ${(c.ultima||'').substring(0,60)}...</div>
+          </div>
+        </div>`).join('');
+    }else{
+      document.getElementById('act-feed').innerHTML='<div class="es">// nenhuma atividade recente</div>';
+    }
+    const tot=allConv.length;
+    document.getElementById('funnel').innerHTML=[
+      ['Webhooks recebidos',tot,'#00C8FF'],
+      ['Respostas enviadas',tot,'#009AB8'],
+      ['Leads identificados',0,'#006E82'],
+      ['Simulações',0,'#00485A'],
+    ].map(([l,n,cor])=>`
+      <div class="fstage">
+        <div class="flabel">${l}</div>
+        <div class="fbar-w"><div class="fbar" style="width:${tot>0?Math.max(n/tot*100,0).toFixed(0):0}%;background:${cor}">${n>0?n:''}</div></div>
+        <div class="fcount">${n}</div>
+      </div>`).join('');
+    renderConv();
+  }catch(e){}
+}
+
+function filterC(){const q=document.getElementById('conv-srch').value.toLowerCase();renderConvList(allConv.filter(c=>fmtPhone(c.telefone).toLowerCase().includes(q)))}
+function renderConv(){renderConvList(allConv)}
+function renderConvList(list){
+  const el=document.getElementById('clist');
+  if(!list.length){el.innerHTML='<div class="es">// nenhuma conversa ativa</div>';return}
+  el.innerHTML=list.map(c=>`
+    <div class="ci ${selPhone===c.telefone?'active':''}" onclick="loadChat('${c.telefone}')">
+      <div class="av">${initials(c.telefone)}</div>
+      <div class="ci-info">
+        <div class="ci-phone">${fmtPhone(c.telefone)}</div>
+        <div class="ci-prev">${c.ultima||'...'}</div>
+      </div>
+      <div><div class="ci-mc">${c.mensagens}</div></div>
+    </div>`).join('');
+}
+
+async function loadChat(phone){
+  selPhone=phone;renderConv();
+  document.getElementById('chat-top').style.display='flex';
+  document.getElementById('chat-av').textContent=initials(phone);
+  document.getElementById('chat-name').textContent=fmtPhone(phone);
+  const msgs=document.getElementById('chat-msgs');
+  msgs.innerHTML='<div class="ld"><div class="sp"></div>Carregando...</div>';
+  try{
+    const d=await fetch(BASE+'/api/conversa/'+phone).then(r=>r.json());
+    document.getElementById('chat-sub').textContent=`${d.mensagens?.length||0} mensagens`;
+    document.getElementById('chat-mc').textContent=`${d.mensagens?.length||0} msgs`;
+    if(!d.mensagens?.length){msgs.innerHTML='<div class="empty"><div class="empty-ico">💬</div><div>Sem mensagens</div></div>';return}
+    msgs.innerHTML=d.mensagens.map(m=>`
+      <div class="mw ${m.role==='user'?'user':'bot'}">
+        <div class="mr">${m.role==='user'?'👤 Cliente':'🤖 SCAR'}</div>
+        <div class="mb">${m.content.replace(/\n/g,'<br>').replace(/\*(.*?)\*/g,'<strong>$1</strong>')}</div>
+      </div>`).join('');
+    msgs.scrollTop=msgs.scrollHeight;
+  }catch(e){msgs.innerHTML='<div class="empty"><div class="empty-ico">⚠️</div><div>Erro ao carregar</div></div>'}
+}
+
+async function loadLeads(){
+  try{
+    const d=await fetch(BASE+'/api/leads').then(r=>r.json());
+    document.getElementById('leads-cnt').textContent=d.total+' leads';
+    const tb=document.getElementById('leads-tb');
+    if(!d.leads?.length){tb.innerHTML='<tr><td colspan="6"><div class="es">// nenhum lead ainda</div></td></tr>';return}
+    tb.innerHTML=d.leads.map(l=>`
+      <tr>
+        <td><div class="td-name">${l.nome||'—'}</div></td>
+        <td><div class="td-phone">${fmtPhone(l.telefone)}</div></td>
+        <td><div class="td-m">${l.email||'—'}</div></td>
+        <td><span class="badge bc">WhatsApp</span></td>
+        <td><span class="badge bg">${l.status||'novo'}</span></td>
+        <td><div class="td-m">${new Date(l.createdAt).toLocaleDateString('pt-BR')}</div></td>
+      </tr>`).join('');
+  }catch(e){document.getElementById('leads-tb').innerHTML='<tr><td colspan="6"><div class="es">// erro</div></td></tr>'}
+}
+
+function renderCatalog(){
+  const cat=[
+    {nome:'Urban Plus',preco:7690,motor:'1000W',bat:'60V 20.8Ah',tag:'entrada'},
+    {nome:'S3 Forever',preco:8990,motor:'1000W',bat:'60V 23Ah',tag:''},
+    {nome:'X12',preco:8990,motor:'1000W',bat:'60V 21Ah',tag:''},
+    {nome:'X13',preco:9490,motor:'1000W',bat:'60V 20Ah',tag:'⭐ destaque'},
+    {nome:'X21',preco:9290,motor:'3000W',bat:'60V 21Ah',tag:'fat tire'},
+    {nome:'X22',preco:9890,motor:'3000W',bat:'60V 21Ah',tag:'retrô'},
+    {nome:'S9 Forever',preco:10490,motor:'1500W',bat:'64V 30Ah',tag:'🏆 autonomia'},
+  ];
+  document.getElementById('cat-grid').innerHTML=cat.map(p=>{
+    const parc=((p.preco/FATOR)+SEG+GPS).toFixed(0);
+    return`<div class="cat-card">
+      <div class="cat-img">🛵</div>
+      <div class="cat-body">
+        <div class="cat-name">${p.nome}${p.tag?`<span class="badge bc" style="font-size:10px;margin-left:6px">${p.tag}</span>`:''}</div>
+        <div class="cat-price">R$ ${p.preco.toLocaleString('pt-BR')}</div>
+        <div class="cat-parc">↳ a partir de R$ ${parc}/mês em 24x</div>
+        <div class="cat-specs"><div>⚡ ${p.motor} · 🔋 ${p.bat}</div></div>
+      </div>
+    </div>`}).join('');
+}
+
+function simCalc(){
+  const vk=document.getElementById('s-modelo').value;
+  const valor=PRECOS[vk]||0;
+  const entrada=parseFloat(document.getElementById('s-entrada').value)||0;
+  if(!valor)return;
+  const pct=entrada/valor;
+  document.getElementById('s-pct').textContent=pct>0?`(${(pct*100).toFixed(0)}% do valor)`:'';
+  const fin=valor-entrada;
+  const pmtL=fin/FATOR;
+  const total=pmtL+SEG+GPS;
+  document.getElementById('s-res').style.display='block';
+  document.getElementById('r-parc').textContent=fmtM(total);
+  document.getElementById('r-det').innerHTML=`
+    <div class="res-row"><span>Parcela leasing</span><strong>${fmtM(pmtL)}</strong></div>
+    <div class="res-row"><span>Seguro Porto Seguro</span><strong>R$ 54,90</strong></div>
+    <div class="res-row"><span>Telemetria GPS</span><strong>R$ 15,00</strong></div>
+    <div class="res-total"><span>Total mensal (24x)</span><strong>${fmtM(total)}</strong></div>`;
+}
+
+function renderConfig(){
+  const eps=[['GET','/api/status'],['GET','/api/leads'],['GET','/api/conversas'],['GET','/api/conversa/:fone'],['POST','/api/enviar'],['GET','/api/simular'],['GET','/api/catalogo']];
+  document.getElementById('eps').innerHTML=eps.map(([m,p])=>`<div class="ep-row"><span class="ep-method">${m}</span><span class="ep-path">${p}</span></div>`).join('');
+}
+
+async function loadAll(manual=false){
+  const btn=document.getElementById('rbtn');
+  if(manual)btn.classList.add('spinning');
+  await Promise.all([loadStatus(),loadConv()]);
+  if(selPhone)loadChat(selPhone);
+  if(manual){btn.classList.remove('spinning');toast('✓ Dados atualizados')}
+}
+
+loadAll();
+renderCatalog();
+renderConfig();
+setInterval(()=>loadAll(),30000);
+</script>
+</body>
+</html>
