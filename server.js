@@ -88,7 +88,7 @@ async function enviarWhatsApp(telefone, mensagem) {
   
   const resp = await axios.post(url, { phone: telefone, message: mensagem }, { headers });
   console.log(`✅ Z-API respondeu:`, JSON.stringify(resp.data));
-  return resp.data;
+  return resp.data;h
 }
 
 function detectarLead(telefone, mensagem) {
